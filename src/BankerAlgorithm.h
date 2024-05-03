@@ -5,11 +5,11 @@
 
 class BankerAlgorithm {
 private:
+    int num_processes, num_resources;
     std::vector<std::vector<int>> allocate;
     std::vector<std::vector<int>> maximum;
     std::vector<std::vector<int>> need;
     std::vector<int> available;
-    int num_processes, num_resources;
 
 public:
     BankerAlgorithm(int p, int r);

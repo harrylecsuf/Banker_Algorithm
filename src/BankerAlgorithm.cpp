@@ -27,9 +27,9 @@ void BankerAlgorithm::calculateNeed() {
 bool BankerAlgorithm::checkSafe() {
     std::vector<int> work = available;
     std::vector<bool> finish(num_processes, false);
-    bool found = true;
-    while (found) {
-        found = false;
+    int count = 0; // Count of finished processes
+    while (count < num_processes) {
+        bool found = false;
         for (int i = 0; i < num_processes; ++i) {
             if (!finish[i]) {
                 int j;
@@ -42,13 +42,12 @@ bool BankerAlgorithm::checkSafe() {
                         work[k] += allocate[i][k];
                     finish[i] = true;
                     found = true;
+                    count++;
                 }
             }
         }
-    }
-
-    for (bool f : finish)
-        if (!f)
+        if (!found) // If no process can be executed, we're in an unsafe state
             return false;
-    return true;
+    }
+    return true; // If all processes finish, the state is safe
 }
