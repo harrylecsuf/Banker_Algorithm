@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -8,7 +9,7 @@
 int main() {
     int pipefd1[2], pipefd2[2];
     pid_t cpid;
-    char buf;
+    char buf[256];
 
     if (pipe(pipefd1) == -1 || pipe(pipefd2) == -1) {
         perror("pipe");
@@ -46,8 +47,17 @@ int main() {
         ba.calculateNeed();
 
         bool safe = ba.checkSafe();
-        const char *msg = safe ? "Safe state\n" : "Deadlock\n";
-        write(pipefd2[1], msg, strlen(msg));
+        if (safe) {
+            std::vector<int> safe_sequence = ba.findSafeSequence();
+            write(pipefd2[1], "Safe state\n", strlen("Safe state\n"));
+            for (int i = 0; i < safe_sequence.size(); ++i) {
+                sprintf(buf, "Process %d ", safe_sequence[i]);
+                write(pipefd2[1], buf, strlen(buf));
+            }
+            write(pipefd2[1], "\n", strlen("\n"));
+        } else {
+            write(pipefd2[1], "Deadlock\n", strlen("Deadlock\n"));
+        }
 
         close(pipefd1[0]);
         close(pipefd2[1]);
@@ -57,26 +67,37 @@ int main() {
         close(pipefd1[0]); // Close unused read end
         close(pipefd2[1]); // Close unused write end
 
-        // Example data setup
-        int num_processes = 5;
-        int num_resources = 3;
+        // Read data from a file
+        std::ifstream infile("input.txt");
+        int num_processes, num_resources;
+        infile >> num_processes >> num_resources;
+
+        std::vector<std::vector<int>> alloc(num_processes, std::vector<int>(num_resources));
+        std::vector<std::vector<int>> max(num_processes, std::vector<int>(num_resources));
+        std::vector<int> avail(num_resources);
+
+        for (int i = 0; i < num_processes; ++i)
+            for (int j = 0; j < num_resources; ++j)
+                infile >> alloc[i][j];
+        for (int i = 0; i < num_processes; ++i)
+            for (int j = 0; j < num_resources; ++j)
+                infile >> max[i][j];
+        for (int j = 0; j < num_resources; ++j)
+            infile >> avail[j];
+
+        close(pipefd1[0]); // Close read end
+
+        // Send data to child process
         write(pipefd1[1], &num_processes, sizeof(num_processes));
         write(pipefd1[1], &num_resources, sizeof(num_resources));
-
-        std::vector<std::vector<int>> alloc = {{0, 1, 0}, {2, 0, 0}, {3, 0, 2}, {2, 1, 1}, {0, 0, 2}};
-        std::vector<std::vector<int>> max = {{7, 5, 3}, {3, 2, 2}, {9, 0, 2}, {2, 2, 2}, {4, 3, 3}};
-        std::vector<int> avail = {3, 3, 2};
-
         for (int i = 0; i < num_processes; ++i)
             write(pipefd1[1], alloc[i].data(), sizeof(int) * num_resources);
         for (int i = 0; i < num_processes; ++i)
             write(pipefd1[1], max[i].data(), sizeof(int) * num_resources);
         write(pipefd1[1], avail.data(), sizeof(int) * num_resources);
 
-        close(pipefd1[1]); // Reader will see EOF
-
-        while (read(pipefd2[0], &buf, 1) > 0)
-            write(STDOUT_FILENO, &buf, 1);
+        while (read(pipefd2[0], buf, sizeof(buf)) > 0)
+            write(STDOUT_FILENO, buf, strlen(buf));
 
         close(pipefd2[0]); // Close read end
         wait(NULL); // Wait for child

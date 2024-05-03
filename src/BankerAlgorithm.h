@@ -19,6 +19,7 @@ public:
     void setAvailable(const std::vector<int>& avail);
     void calculateNeed();
     bool checkSafe();
+    std::vector<int> findSafeSequence();
 };
 
 #endif

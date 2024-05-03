@@ -51,3 +51,33 @@ bool BankerAlgorithm::checkSafe() {
     }
     return true; // If all processes finish, the state is safe
 }
+
+std::vector<int> BankerAlgorithm::findSafeSequence() {
+    std::vector<int> safe_sequence;
+    std::vector<int> work = available;
+    std::vector<bool> finish(num_processes, false);
+    int count = 0; // Count of finished processes
+    while (count < num_processes) {
+        bool found = false;
+        for (int i = 0; i < num_processes; ++i) {
+            if (!finish[i]) {
+                int j;
+                for (j = 0; j < num_resources; ++j) {
+                    if (need[i][j] > work[j])
+                        break;
+                }
+                if (j == num_resources) { // If all needs are met
+                    for (int k = 0; k < num_resources; ++k)
+                        work[k] += allocate[i][k];
+                    finish[i] = true;
+                    found = true;
+                    count++;
+                    safe_sequence.push_back(i);
+                }
+            }
+        }
+        if (!found) // If no process can be executed, we're in an unsafe state
+            break;
+    }
+    return safe_sequence;
+}
