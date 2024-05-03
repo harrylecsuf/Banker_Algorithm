@@ -1,104 +1,54 @@
 #include "BankerAlgorithm.h"
 
-#include <vector>
+BankerAlgorithm::BankerAlgorithm(int p, int r) : num_processes(p), num_resources(r),
+                                    allocate(p, std::vector<int>(r, 0)),
+                                    maximum(p, std::vector<int>(r, 0)),
+                                    need(p, std::vector<int>(r, 0)),
+                                    available(r, 0) {}
 
-using namespace std;
-
-BankerAlgorithm::BankerAlgorithm() : num_processes(0), num_resources(0) {}
-
-void BankerAlgorithm::initializeData(int processes, int resources) {
-    num_processes = processes;
-    num_resources = resources;
-    allocation.resize(num_processes, vector<int>(num_resources, 0));
-    max.resize(num_processes, vector<int>(num_resources, 0));
-    need.resize(num_processes, vector<int>(num_resources, 0));
+void BankerAlgorithm::setAllocation(const std::vector<std::vector<int>>& alloc) {
+    allocate = alloc;
 }
 
-void BankerAlgorithm::setAllocation(const vector<vector<int>> &alloc) {
-    allocation = alloc;
+void BankerAlgorithm::setMaximum(const std::vector<std::vector<int>>& max) {
+    maximum = max;
 }
 
-void BankerAlgorithm::setMax(const vector<vector<int>> &maximum) {
-    max = maximum;
-    for (int i = 0; i < num_processes; ++i) {
-        for (int j = 0; j < num_resources; ++j) {
-            need[i][j] = max[i][j] - allocation[i][j];
-        }
-    }
-}
-
-void BankerAlgorithm::setAvailable(const vector<int> &avail) {
+void BankerAlgorithm::setAvailable(const std::vector<int>& avail) {
     available = avail;
 }
 
-bool BankerAlgorithm::isSafe(vector<int> &work, vector<bool> &finish) {
-    vector<int> tempWork = work;
-    vector<bool> tempFinish = finish;
-
-    for (int i = 0; i < num_processes; ++i) {
-        if (!tempFinish[i]) {
-            bool canAllocate = true;
-            for (int j = 0; j < num_resources; ++j) {
-                if (need[i][j] > tempWork[j]) {
-                    canAllocate = false;
-                    break;
-                }
-            }
-
-            if (canAllocate) {
-                for (int j = 0; j < num_resources; ++j) {
-                    tempWork[j] += allocation[i][j];
-                }
-                tempFinish[i] = true;
-                i = -1;
-            }
-        }
-    }
-
-    for (int i = 0; i < num_processes; ++i) {
-        if (!tempFinish[i])
-            return false;
-    }
-
-    return true;
+void BankerAlgorithm::calculateNeed() {
+    for (int i = 0; i < num_processes; ++i)
+        for (int j = 0; j < num_resources; ++j)
+            need[i][j] = maximum[i][j] - allocate[i][j];
 }
 
-bool BankerAlgorithm::isSafeState() {
-    vector<int> work = available;
-    vector<bool> finish(num_processes, false);
-    return isSafe(work, finish);
-}
-
-vector<int> BankerAlgorithm::getSafeSequence() {
-    vector<int> safeSeq;
-    vector<int> work = available;
-    vector<bool> finish(num_processes, false);
-
-    while (true) {
-        bool found = false;
+bool BankerAlgorithm::checkSafe() {
+    std::vector<int> work = available;
+    std::vector<bool> finish(num_processes, false);
+    bool found = true;
+    while (found) {
+        found = false;
         for (int i = 0; i < num_processes; ++i) {
             if (!finish[i]) {
-                bool canAllocate = true;
-                for (int j = 0; j < num_resources; ++j) {
-                    if (need[i][j] > work[j]) {
-                        canAllocate = false;
+                int j;
+                for (j = 0; j < num_resources; ++j) {
+                    if (need[i][j] > work[j])
                         break;
-                    }
                 }
-
-                if (canAllocate) {
-                    for (int j = 0; j < num_resources; ++j) {
-                        work[j] += allocation[i][j];
-                    }
+                if (j == num_resources) { // If all needs are met
+                    for (int k = 0; k < num_resources; ++k)
+                        work[k] += allocate[i][k];
                     finish[i] = true;
-                    safeSeq.push_back(i);
                     found = true;
                 }
             }
         }
-        if (!found)
-            break;
     }
 
-    return safeSeq;
+    for (bool f : finish)
+        if (!f)
+            return false;
+    return true;
 }
