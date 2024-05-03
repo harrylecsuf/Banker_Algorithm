@@ -48,7 +48,7 @@ int main() {
             std::vector<int> safe_sequence = ba.findSafeSequence();
             write(pipefd2[1], "Safe state\n", strlen("Safe state\n"));
             for (int i = 0; i < safe_sequence.size(); ++i) {
-                sprintf(buf, "Process %d ", safe_sequence[i]);
+                snprintf(buf, sizeof(buf), "%d ", safe_sequence[i]);
                 write(pipefd2[1], buf, strlen(buf));
             }
             write(pipefd2[1], "\n", strlen("\n"));
@@ -71,8 +71,6 @@ int main() {
         std::vector<std::vector<int>> max = {{7, 5, 3}, {3, 2, 2}, {9, 0, 2}, {2, 2, 2}, {4, 3, 3}};
         std::vector<int> avail = {3, 3, 2};
 
-        close(pipefd1[1]); // Close write end
-
         // Send data to child process
         write(pipefd1[1], &num_processes, sizeof(num_processes));
         write(pipefd1[1], &num_resources, sizeof(num_resources));
@@ -82,8 +80,14 @@ int main() {
             write(pipefd1[1], max[i].data(), sizeof(int) * num_resources);
         write(pipefd1[1], avail.data(), sizeof(int) * num_resources);
 
-        while (read(pipefd2[0], buf, sizeof(buf)) > 0)
-            write(STDOUT_FILENO, buf, strlen(buf));
+        close(pipefd1[1]); // Close write end
+
+        char child_output[256];
+        ssize_t nbytes;
+        while ((nbytes = read(pipefd2[0], child_output, sizeof(child_output))) > 0) {
+            child_output[nbytes] = '\0';
+            std::cout << child_output;
+        }
 
         close(pipefd2[0]); // Close read end
         wait(NULL); // Wait for child

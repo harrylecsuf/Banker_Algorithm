@@ -1,8 +1,5 @@
 #include <iostream>
-#include <fstream>
-#include <vector>
 #include <unistd.h>
-#include <sys/wait.h>
 #include <cstring>
 #include "BankerAlgorithm.h"
 
@@ -51,7 +48,7 @@ int main() {
             std::vector<int> safe_sequence = ba.findSafeSequence();
             write(pipefd2[1], "Safe state\n", strlen("Safe state\n"));
             for (int i = 0; i < safe_sequence.size(); ++i) {
-                sprintf(buf, "Process %d ", safe_sequence[i]);
+                snprintf(buf, sizeof(buf), "Process %d ", safe_sequence[i]);
                 write(pipefd2[1], buf, strlen(buf));
             }
             write(pipefd2[1], "\n", strlen("\n"));
