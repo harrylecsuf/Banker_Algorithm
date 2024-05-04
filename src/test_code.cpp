@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
+#include <fstream>
 #include "BankerAlgorithm.h"
 
 int main() {
@@ -64,12 +65,29 @@ int main() {
         close(pipefd1[0]); // Close unused read end
         close(pipefd2[1]); // Close unused write end
 
-        // Example data setup for safe system
-        int num_processes = 5;
-        int num_resources = 3;
-        std::vector<std::vector<int>> alloc = {{0, 1, 0}, {2, 0, 0}, {3, 0, 2}, {2, 1, 1}, {0, 0, 2}};
-        std::vector<std::vector<int>> max = {{7, 5, 3}, {3, 2, 2}, {9, 0, 2}, {2, 2, 2}, {4, 3, 3}};
-        std::vector<int> avail = {3, 3, 2};
+        std::ifstream input("input.txt");
+        if (input.is_open()) {
+            std::cerr << "Error: Unable to open input file!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        int num_processes, num_resources;
+        input >> num_processes >> num_resources;
+
+        std::vector<std::vector<int>> alloc(num_processes, std::vector<int>(num_resources));
+        std::vector<std::vector<int>> max(num_processes, std::vector<int>(num_resources));
+        std::vector<int> avail(num_resources);
+
+        for (int i = 0; i < num_processes; ++i)
+            for (int j = 0; j < num_resources; ++j)
+                input >> alloc[i][j];
+        for (int i = 0; i < num_processes; ++i)
+            for (int j = 0; j < num_resources; ++j)
+                input >> max[i][j];
+        for (int i = 0; i < num_resources; ++i)
+            input >> avail[i];
+
+        close(pipefd1[1]); // Close write end
 
         // Send data to child process
         write(pipefd1[1], &num_processes, sizeof(num_processes));
@@ -79,8 +97,6 @@ int main() {
         for (int i = 0; i < num_processes; ++i)
             write(pipefd1[1], max[i].data(), sizeof(int) * num_resources);
         write(pipefd1[1], avail.data(), sizeof(int) * num_resources);
-
-        close(pipefd1[1]); // Close write end
 
         char child_output[256];
         ssize_t nbytes;
