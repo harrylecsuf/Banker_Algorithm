@@ -66,7 +66,7 @@ int main() {
         close(pipefd2[1]); // Close unused write end
 
         std::ifstream input("input.txt");
-        if (input.is_open()) {
+        if (!input.is_open()) {
             std::cerr << "Error: Unable to open input file!" << std::endl;
             exit(EXIT_FAILURE);
         }
@@ -107,6 +107,29 @@ int main() {
 
         close(pipefd2[0]); // Close read end
         wait(NULL); // Wait for child
+
+        // Test dynamic resource allocation
+        std::cout << "Testing dynamic resource allocation:" << std::endl;
+        BankerAlgorithm ba(num_processes, num_resources);
+        ba.setAllocation(alloc);
+        ba.setMaximum(max);
+        ba.setAvailable(avail);
+        ba.calculateNeed();
+
+        std::vector<int> request = {1, 1, 1, 1}; // Resource request for process 0
+        ba.allocateResources(0, request);
+        std::cout << "Resource allocated to process 0." << std::endl;
+
+        std::vector<int> release = {0, 0, 0, 0}; // Resource release for process 0
+        ba.deallocateResources(0, release);
+        std::cout << "Resource deallocated from process 0." << std::endl;
+
+        std::vector<int> safe_sequence = ba.findSafeSequence();
+        std::cout << "Safe sequence after dynamic resource allocation and deallocation: ";
+        for (int process : safe_sequence)
+            std::cout << process << " ";
+        std::cout << std::endl;
+
         exit(EXIT_SUCCESS);
     }
 }

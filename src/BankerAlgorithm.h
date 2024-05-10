@@ -2,6 +2,7 @@
 #define BANKER_ALGORITHM_H
 
 #include <vector>
+#include <unordered_set>
 
 class BankerAlgorithm {
 private:
@@ -10,6 +11,9 @@ private:
     std::vector<std::vector<int>> maximum;
     std::vector<std::vector<int>> need;
     std::vector<int> available;
+    std::vector<bool> finish;
+    std::unordered_set<int> safe_sequence;
+    std::vector<std::vector<int>> work;
 
 public:
     BankerAlgorithm(int p, int r);
@@ -19,7 +23,11 @@ public:
     void setAvailable(const std::vector<int>& avail);
     void calculateNeed();
     bool checkSafe();
-    std::vector<int> findSafeSequence();
+    void findSafeSequence();
+    std::vector<std::unordered_set<int>> findAllPossibleSafeSequences();
+
+    void allocateResources(int process, const std::vector<int>& request);
+    void deallocateResources(int process, const std::vector<int>& release);
 };
 
 #endif
