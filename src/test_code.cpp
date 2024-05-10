@@ -116,20 +116,18 @@ int main() {
         ba.setAvailable(avail);
         ba.calculateNeed();
 
-        std::vector<int> request = {1, 1, 1, 1}; // Resource request for process 0
-        ba.allocateResources(0, request);
-        std::cout << "Resource allocated to process 0." << std::endl;
-
         std::vector<int> release = {0, 0, 0, 0}; // Resource release for process 0
         ba.deallocateResources(0, release);
         std::cout << "Resource deallocated from process 0." << std::endl;
 
-        std::vector<int> safe_sequence = ba.findSafeSequence();
-        std::cout << "Safe sequence after dynamic resource allocation and deallocation: ";
-        for (int process : safe_sequence)
-            std::cout << process << " ";
-        std::cout << std::endl;
-
-        exit(EXIT_SUCCESS);
+        std::cout << "All possible safe sequences after dynamic resource allocation and deallocation: " << std::endl;
+        std::vector<std::unordered_set<int>> all_sequences = ba.findAllPossibleSafeSequences();
+        for (const auto& seq : all_sequences) {
+            for (int process : seq)
+                std::cout << process << " ";
+            std::cout << std::endl;
+        }
+        
+        exit(0);
     }
 }
