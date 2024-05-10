@@ -1,4 +1,5 @@
 #include "BankerAlgorithm.h"
+#include <iostream>
 
 BankerAlgorithm::BankerAlgorithm(int p, int r) : num_processes(p), num_resources(r),
                                     allocate(p, std::vector<int>(r, 0)),
