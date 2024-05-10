@@ -26,6 +26,10 @@ public:
     void findSafeSequence();
     std::vector<std::unordered_set<int>> findAllPossibleSafeSequences();
 
+    void BankerAlgorithm::findAllPossibleSafeSequencesUtil(int process, std::vector<bool>& visited,
+                                                        std::vector<int>& seq,
+                                                        std::vector<std::unordered_set<int>>& all_sequences);
+
     void allocateResources(int process, const std::vector<int>& request);
     void deallocateResources(int process, const std::vector<int>& release);
 };
