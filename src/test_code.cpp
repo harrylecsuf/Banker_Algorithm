@@ -47,14 +47,20 @@ int main() {
         bool safe = ba.checkSafe();
         if (safe) {
             std::vector<int> safe_sequence = ba.findSafeSequence();
-            write(pipefd2[1], "Safe state\n", strlen("Safe state\n"));
-            for (int i = 0; i < safe_sequence.size(); ++i) {
-                snprintf(buf, sizeof(buf), "%d ", safe_sequence[i]);
-                write(pipefd2[1], buf, strlen(buf));
+            if (!safe_sequence.empty()) {
+                write(pipefd2[1], "Safe state\n", strlen("Safe state\n"));
+                for (int i = 0; i < safe_sequence.size(); ++i) {
+                    snprintf(buf, sizeof(buf), "%d ", safe_sequence[i]);
+                    write(pipefd2[1], buf, strlen(buf));
+                }
+                write(pipefd2[1], "\n", strlen("\n"));
+            } else {
+                const char* err_msg = "Oops! Looks like we're stuck in a deadlock!";
+                write(pipefd2[1], err_msg, strlen(err_msg));
             }
-            write(pipefd2[1], "\n", strlen("\n"));
         } else {
-            write(pipefd2[1], "Deadlock\n", strlen("Deadlock\n"));
+            const char* err_msg = "Oops! Looks like we're stuck in a deadlock!";
+            write(pipefd2[1], err_msg, strlen(err_msg));
         }
 
         close(pipefd1[0]);
@@ -65,7 +71,7 @@ int main() {
         close(pipefd1[0]); // Close unused read end
         close(pipefd2[1]); // Close unused write end
 
-        std::ifstream input("input.txt");
+        std::ifstream input("src/input.txt");
         if (!input.is_open()) {
             std::cerr << "Error: Unable to open input file!" << std::endl;
             exit(EXIT_FAILURE);
@@ -87,6 +93,28 @@ int main() {
         for (int i = 0; i < num_resources; ++i)
             input >> avail[i];
 
+        std::cout << "Num Processes: " << num_processes << std::endl;
+        std::cout << "Num Resources: " << num_resources << std::endl;
+        std::cout << "Allocation Matrix:" << std::endl;
+        for (const auto& row : alloc) {
+            for (int cell : row) {
+                std::cout << cell << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "Max Matrix:" << std::endl;
+        for (const auto& row : max) {
+            for (int cell : row) {
+                std::cout << cell << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "Available Resources:" << std::endl;
+        for (int cell : avail) {
+            std::cout << cell << " ";
+        }
+        std::cout << std::endl;
+
         close(pipefd1[1]); // Close write end
 
         // Send data to child process
@@ -107,27 +135,6 @@ int main() {
 
         close(pipefd2[0]); // Close read end
         wait(NULL); // Wait for child
-
-        // Test dynamic resource allocation
-        std::cout << "Testing dynamic resource allocation:" << std::endl;
-        BankerAlgorithm ba(num_processes, num_resources);
-        ba.setAllocation(alloc);
-        ba.setMaximum(max);
-        ba.setAvailable(avail);
-        ba.calculateNeed();
-
-        std::vector<int> release = {0, 0, 0, 0}; // Resource release for process 0
-        ba.deallocateResources(0, release);
-        std::cout << "Resource deallocated from process 0." << std::endl;
-
-        std::cout << "All possible safe sequences after dynamic resource allocation and deallocation: " << std::endl;
-        std::vector<std::unordered_set<int>> all_sequences = ba.findAllPossibleSafeSequences();
-        for (const auto& seq : all_sequences) {
-            for (int process : seq)
-                std::cout << process << " ";
-            std::cout << std::endl;
-        }
-        
-        exit(0);
+        exit(EXIT_SUCCESS);
     }
 }

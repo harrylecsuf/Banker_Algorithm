@@ -1,6 +1,10 @@
 {
     "files.associations": {
+<<<<<<< HEAD
         "ostream": "cpp",
+=======
+        "fstream": "cpp",
+>>>>>>> old-state
         "__bit_reference": "cpp",
         "__config": "cpp",
         "__hash_table": "cpp",
@@ -25,7 +29,10 @@
         "cwchar": "cpp",
         "cwctype": "cpp",
         "execution": "cpp",
+<<<<<<< HEAD
         "fstream": "cpp",
+=======
+>>>>>>> old-state
         "initializer_list": "cpp",
         "iomanip": "cpp",
         "ios": "cpp",
@@ -37,6 +44,10 @@
         "mutex": "cpp",
         "new": "cpp",
         "optional": "cpp",
+<<<<<<< HEAD
+=======
+        "ostream": "cpp",
+>>>>>>> old-state
         "ratio": "cpp",
         "sstream": "cpp",
         "stdexcept": "cpp",
